@@ -26,12 +26,16 @@ def quadradticSieve(n):
     return [x for x in sieve if x]
 
 
-kernel = SourceModule('''
-    __global__ void factor(float *a){
-        int idx = threadIdx.x + threadIdx.y*4;
-        a[idx] *= 2;
+kernel = SourceModule("""
+    __global__ void factor(int n, int *value){
+        int i = threadIdx.x;
+        int p = value[i];
+
+        if(n % p != 0){
+            value[i] = 0;
+        }
     }
-''')
+""")
 
 
 def factor(n):
@@ -41,14 +45,26 @@ def factor(n):
     primes = quadradticSieve(int(n ** 0.5) + 1)
     factors = []
 
-    for p in primes:
-        if p * p > n:
-            break
-        while n % p == 0:
-            factors.append(p)
-            n //= p
+    a = numpy.copy(primes)
+    a = a.astype(numpy.int32)
+    a_gpu = cuda.mem_alloc(a.nbytes)
+    cuda.memcpy_htod(a_gpu, a)
+    function = kernel.get_function('factor')
+
+    # for p in primes:
+        # if p * p > n:
+        #     break
+        # while n % p == 0:
+        #     factors.append(p)
+        #     n //= p
+    function(numpy.int32(n), a_gpu, block=(128, 1, 1))
+
     if n > 1:
         factors.append(n)
+
+    a_copied = numpy.empty_like(a)
+    cuda.memcpy_dtoh(a_copied, a_gpu)
+    print(a_copied)
 
     return factors
 
