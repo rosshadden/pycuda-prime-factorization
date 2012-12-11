@@ -11,6 +11,14 @@ from pycuda.compiler import SourceModule
 import numpy
 
 
+kernel = SourceModule("""
+    __global__ void factor(float *a){
+        int idx = threadIdx.x + threadIdx.y*4;
+        a[idx] *= 2;
+    }
+""")
+
+
 class ParallelTrialDivision (util.FactoringMethod):
     def __init__(self):
         util.FactoringMethod.__init__(self)
@@ -18,13 +26,30 @@ class ParallelTrialDivision (util.FactoringMethod):
     def find(self, target, **options):
         return pTrialDivision(target)
 
+    def continue_factor(self, tracker, **options):
+        return_list = (options.get('return_type', '') == 'list')
+        primeq = options.get('primeq', prime.primeq)
 
-kernel = SourceModule("""
-    __global__ void factor(float *a){
-        int idx = threadIdx.x + threadIdx.y*4;
-        a[idx] *= 2;
-    }
-""")
+        while True:
+            try:
+                target = tracker.getNextTarget()
+            except LookupError:
+                # factored completely
+                break
+            if primeq(target):
+                tracker.register(target, True)
+            else:
+                p = self.find(target, **options)
+                if 1 < p < target:
+                    # factor found
+                    tracker.register(p, primeq(p))
+                elif p == 1:
+                    # failed to factor
+                    break
+        if return_list:
+            return tracker.getResult()
+        else:
+            return tracker
 
 
 def pTrialDivision(n, **options):

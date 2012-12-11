@@ -1,8 +1,48 @@
+from __future__ import generators
 import sys, math, fractions
 import nzmath.arith1 as arith1
 import nzmath.factor.util as util
 import nzmath.gcd as gcd
 import nzmath.prime as prime
+
+## {{{ http://code.activestate.com/recipes/117119/ (r2)
+# Sieve of Eratosthenes
+# David Eppstein, UC Irvine, 28 Feb 2002
+
+
+def eratosthenes():
+    '''Yields the sequence of prime numbers via the Sieve of Eratosthenes.'''
+    D = {}  # map composite integers to primes witnessing their compositeness
+    q = 2   # first integer to test for primality
+    while 1:
+        if q not in D:
+            yield q        # not marked composite, must be prime
+            D[q * q] = [q]   # first multiple of q not already marked
+        else:
+            for p in D[q]:  # move each witness to its next multiple
+                D.setdefault(p + q, []).append(p)
+            del D[q]       # no longer need D[q], free memory
+        q += 1
+## end of http://code.activestate.com/recipes/117119/ }}}
+
+
+def factor(n):
+    """Return a list of the prime factors for a natural number."""
+    if n == 1:
+        return [1]
+    primes = sieve(int(n ** 0.5) + 1)
+    prime_factors = []
+
+    for p in primes:
+        if p * p > n:
+            break
+        while n % p == 0:
+            prime_factors.append(p)
+            n //= p
+    if n > 1:
+        prime_factors.append(n)
+
+    return prime_factors
 
 
 class ParallelTrialDivision (util.FactoringMethod):
@@ -135,4 +175,4 @@ except:
 
 # test
 print n
-print parallelTrialDivision(n)
+print factor(n)
