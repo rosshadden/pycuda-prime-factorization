@@ -1,9 +1,5 @@
 import sys
 
-import nzmath.arith1 as arith1
-import nzmath.factor.util as util
-import nzmath.prime as prime
-
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
 import pycuda.autoinit
@@ -11,16 +7,16 @@ from pycuda.compiler import SourceModule
 import numpy
 
 
-kernel = SourceModule("""
+kernel = SourceModule('''
     __global__ void factor(float *a){
         int idx = threadIdx.x + threadIdx.y*4;
         a[idx] *= 2;
     }
-""")
+''')
 
 
-def sieve(n):
-    '''Get all primes up to n.'''
+def quadradticSieve(n):
+    """Get all primes up to n."""
     n = int(n)
     if n < 2:
         return []
@@ -42,19 +38,19 @@ def factor(n):
     """Return a list of the prime factors for a natural number."""
     if n == 1:
         return [1]
-    primes = sieve(int(n ** 0.5) + 1)
-    prime_factors = []
+    primes = quadradticSieve(int(n ** 0.5) + 1)
+    factors = []
 
     for p in primes:
         if p * p > n:
             break
         while n % p == 0:
-            prime_factors.append(p)
+            factors.append(p)
             n //= p
     if n > 1:
-        prime_factors.append(n)
+        factors.append(n)
 
-    return prime_factors
+    return factors
 
 
 try:
