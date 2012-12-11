@@ -19,57 +19,42 @@ kernel = SourceModule("""
 """)
 
 
-class ParallelTrialDivision (util.FactoringMethod):
-    def __init__(self):
-        util.FactoringMethod.__init__(self)
-
-    def find(self, target, **options):
-        return pTrialDivision(target)
-
-    def continue_factor(self, tracker, **options):
-        return_list = (options.get('return_type', '') == 'list')
-        primeq = options.get('primeq', prime.primeq)
-
-        while True:
-            try:
-                target = tracker.getNextTarget()
-            except LookupError:
-                # factored completely
-                break
-            if primeq(target):
-                tracker.register(target, True)
-            else:
-                p = self.find(target, **options)
-                if 1 < p < target:
-                    # factor found
-                    tracker.register(p, primeq(p))
-                elif p == 1:
-                    # failed to factor
-                    break
-        if return_list:
-            return tracker.getResult()
-        else:
-            return tracker
+def sieve(n):
+    '''Get all primes up to n.'''
+    n = int(n)
+    if n < 2:
+        return []
+    sieve = range(n)
+    sieve[1] = 0
+    root = n ** 0.5
+    index = 0
+    while index <= root:
+        if sieve[index]:
+            i = index ** 2
+            while i < n:
+                sieve[i] = 0
+                i += index
+        index += 1
+    return [x for x in sieve if x]
 
 
-def pTrialDivision(n, **options):
-    if n < 1000000:
-        trials = prime.generator_eratosthenes(arith1.floorsqrt(n))
-    else:
-        trials = prime.generator()
+def factor(n):
+    """Return a list of the prime factors for a natural number."""
+    if n == 1:
+        return [1]
+    primes = sieve(int(n ** 0.5) + 1)
+    prime_factors = []
 
-    limit = arith1.floorsqrt(n)
-    for p in trials:
-        if limit < p:
+    for p in primes:
+        if p * p > n:
             break
-        if 0 == n % p:
-            return p
-    return 1
+        while n % p == 0:
+            prime_factors.append(p)
+            n //= p
+    if n > 1:
+        prime_factors.append(n)
 
-
-def main(n, **options):
-    parallelTrialDivision = ParallelTrialDivision()
-    return parallelTrialDivision.factor(n, **options)
+    return prime_factors
 
 
 try:
@@ -79,4 +64,4 @@ except:
 
 # test
 print n
-print main(n)
+print factor(n)
