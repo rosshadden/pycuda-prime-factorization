@@ -31,8 +31,11 @@ kernel = SourceModule("""
         int i = threadIdx.x;
         int p = value[i];
 
-        if(n % p != 0){
-            value[i] = 0;
+        if(n % p == 0){
+            value[i] = p;
+            //value[i] = n / p;
+        }else{
+            value[i] = 9999;
         }
     }
 """)
@@ -57,14 +60,38 @@ def factor(n):
         # while n % p == 0:
         #     factors.append(p)
         #     n //= p
-    function(numpy.int32(n), a_gpu, block=(128, 1, 1))
+    while True:
+        function(numpy.int32(n), a_gpu, block=(128, 1, 1))
+        a_copy = numpy.empty_like(a)
+        cuda.memcpy_dtoh(a_copy, a_gpu)
+        factor = min(a_copy)
+        if factor == 9999 or factor == 1 or factor == 0:
+            break
+        factors.append(factor)
+        n /= factor
 
     if n > 1:
         factors.append(n)
 
-    a_copied = numpy.empty_like(a)
-    cuda.memcpy_dtoh(a_copied, a_gpu)
-    print(a_copied)
+    return factors
+
+
+def factorSerial(n):
+    """Return a list of the prime factors for a natural number."""
+    if n == 1:
+        return [1]
+    primes = quadradticSieve(int(n ** 0.5) + 1)
+    factors = []
+
+    for p in primes:
+        if p * p > n:
+            break
+        while n % p == 0:
+            factors.append(p)
+            n //= p
+
+    if n > 1:
+        factors.append(n)
 
     return factors
 
