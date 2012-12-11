@@ -7,14 +7,6 @@ from pycuda.compiler import SourceModule
 import numpy
 
 
-kernel = SourceModule('''
-    __global__ void factor(float *a){
-        int idx = threadIdx.x + threadIdx.y*4;
-        a[idx] *= 2;
-    }
-''')
-
-
 def quadradticSieve(n):
     """Get all primes up to n."""
     n = int(n)
@@ -32,6 +24,14 @@ def quadradticSieve(n):
                 i += index
         index += 1
     return [x for x in sieve if x]
+
+
+kernel = SourceModule('''
+    __global__ void factor(float *a){
+        int idx = threadIdx.x + threadIdx.y*4;
+        a[idx] *= 2;
+    }
+''')
 
 
 def factor(n):
