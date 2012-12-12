@@ -51,21 +51,23 @@ def factorParallel(n):
 
     if n == 1:
         return [1]
-    primes = quadradticSieve(int(n ** 0.5) + 1)
     factors = []
 
-    a = numpy.copy(primes)
-    a = a.astype(numpy.int32)
-    a_gpu = cuda.mem_alloc(a.nbytes)
-    cuda.memcpy_htod(a_gpu, a)
+    allPrimes = quadradticSieve(int(n ** 0.5) + 1)
     function = kernel.get_function('factor')
 
     logged = False
     while True:
-        function(numpy.int32(n), a_gpu, block=(512, 1, 1))
-        a_copy = numpy.empty_like(a)
-        cuda.memcpy_dtoh(a_copy, a_gpu)
-        factor = min(a_copy, 1)
+        primes = numpy.copy(allPrimes[0:n])
+        primes = primes.astype(numpy.int32)
+        primes_gpu = cuda.mem_alloc(primes.nbytes)
+        cuda.memcpy_htod(primes_gpu, primes)
+
+        function(numpy.int32(n), primes_gpu, block=(len(primes), 1, 1))
+
+        result = numpy.empty_like(primes)
+        cuda.memcpy_dtoh(result, primes_gpu)
+        factor = min(result, 1)
         if factor == None:
             break
         factors.append(factor)
@@ -73,7 +75,7 @@ def factorParallel(n):
 
         if not logged:
             logged = True
-            print 'Using', len(a_copy), 'cores.'
+            print 'Using', len(primes), 'cores.'
 
     if n > 1:
         factors.append(n)
