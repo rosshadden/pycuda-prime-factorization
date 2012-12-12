@@ -60,22 +60,20 @@ def factorParallel(n):
     cuda.memcpy_htod(a_gpu, a)
     function = kernel.get_function('factor')
 
-    # for p in primes:
-        # if p * p > n:
-        #     break
-        # while n % p == 0:
-        #     factors.append(p)
-        #     n //= p
+    logged = False
     while True:
-        function(numpy.int32(n), a_gpu, block=(128, 1, 1))
+        function(numpy.int32(n), a_gpu, block=(512, 1, 1))
         a_copy = numpy.empty_like(a)
         cuda.memcpy_dtoh(a_copy, a_gpu)
         factor = min(a_copy, 1)
-        print len(a_copy)
         if factor == None:
             break
         factors.append(factor)
         n /= factor
+
+        if not logged:
+            logged = True
+            print 'Using', len(a_copy), 'cores.'
 
     if n > 1:
         factors.append(n)
