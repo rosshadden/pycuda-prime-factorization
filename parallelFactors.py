@@ -1,6 +1,6 @@
 import sys
+import math
 
-import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
@@ -58,16 +58,16 @@ def factorParallel(n):
 
     logged = False
     while True:
-        primes = numpy.copy(allPrimes[0:n])
-        primes = primes.astype(numpy.int32)
-        primes_gpu = cuda.mem_alloc(primes.nbytes)
-        cuda.memcpy_htod(primes_gpu, primes)
-
-        limit = min(len(primes), 512)
-        numTimes = len(primes) / limit
+        limit = min(len(allPrimes), 512)
+        numTimes = math.ceil(len(allPrimes) / (1.0 * limit))
 
         result = numpy.array([])
-        for t in range(0, numTimes):
+        for t in range(0, int(numTimes)):
+            primes = numpy.copy(allPrimes[t * limit:min(t * limit + limit, len(allPrimes))])
+            primes = primes.astype(numpy.int32)
+            primes_gpu = cuda.mem_alloc(primes.nbytes)
+            cuda.memcpy_htod(primes_gpu, primes)
+
             function(numpy.int32(n), primes_gpu, block=(limit, 1, 1))
             currentResult = numpy.empty_like(primes)
             cuda.memcpy_dtoh(currentResult, primes_gpu)
