@@ -34,7 +34,7 @@ kernel = SourceModule("""
         if(n % p == 0){
             value[i] = p;
         }else{
-            value[i] = 999999;
+            value[i] = 0;
         }
     }
 """)
@@ -42,6 +42,13 @@ kernel = SourceModule("""
 
 def factorParallel(n):
     """Return a list of the prime factors for a natural number."""
+
+    def min(list, bound):
+        for item in list:
+            if item > bound:
+                return item
+        return None
+
     if n == 1:
         return [1]
     primes = quadradticSieve(int(n ** 0.5) + 1)
@@ -63,8 +70,9 @@ def factorParallel(n):
         function(numpy.int32(n), a_gpu, block=(128, 1, 1))
         a_copy = numpy.empty_like(a)
         cuda.memcpy_dtoh(a_copy, a_gpu)
-        factor = min(a_copy)
-        if factor == 999999 or factor == 1 or factor == 0:
+        factor = min(a_copy, 1)
+        print len(a_copy)
+        if factor == None:
             break
         factors.append(factor)
         n /= factor
