@@ -72,6 +72,9 @@ def factorParallel(n):
             currentResult = numpy.empty_like(primes)
             cuda.memcpy_dtoh(currentResult, primes_gpu)
             result = numpy.concatenate((result, currentResult), axis=0).astype(int)
+            print t * limit, '\t', min(t * limit + limit, len(allPrimes)), '\t', len(allPrimes)
+            if min2(result, 1) != None:
+                break
 
         factor = min2(result, 1)
         if factor == None:
