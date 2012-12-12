@@ -33,15 +33,14 @@ kernel = SourceModule("""
 
         if(n % p == 0){
             value[i] = p;
-            //value[i] = n / p;
         }else{
-            value[i] = 9999;
+            value[i] = 999999;
         }
     }
 """)
 
 
-def factor(n):
+def factorParallel(n):
     """Return a list of the prime factors for a natural number."""
     if n == 1:
         return [1]
@@ -65,7 +64,7 @@ def factor(n):
         a_copy = numpy.empty_like(a)
         cuda.memcpy_dtoh(a_copy, a_gpu)
         factor = min(a_copy)
-        if factor == 9999 or factor == 1 or factor == 0:
+        if factor == 999999 or factor == 1 or factor == 0:
             break
         factors.append(factor)
         n /= factor
@@ -96,11 +95,21 @@ def factorSerial(n):
     return factors
 
 
-try:
-    n = int(sys.argv[1:][0])
-except:
+if len(sys.argv) == 3:
+    method = sys.argv[1]
+    n = int(sys.argv[2])
+elif len(sys.argv) == 2:
+    n = int(sys.argv[1])
+    method = 'parallel'
+else:
     n = 100
+    method = 'parallel'
+
+if method == 'serial':
+    factor = factorSerial
+else:
+    factor = factorParallel
 
 # test
-print n
+print n, 'in', method
 print factor(n)
