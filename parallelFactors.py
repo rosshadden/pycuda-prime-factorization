@@ -43,7 +43,7 @@ kernel = SourceModule("""
 def factorParallel(n):
     """Return a list of the prime factors for a natural number."""
 
-    def min(list, bound):
+    def min2(list, bound):
         for item in list:
             if item > bound:
                 return item
@@ -63,11 +63,17 @@ def factorParallel(n):
         primes_gpu = cuda.mem_alloc(primes.nbytes)
         cuda.memcpy_htod(primes_gpu, primes)
 
-        function(numpy.int32(n), primes_gpu, block=(len(primes), 1, 1))
+        limit = min(len(primes), 512)
+        numTimes = len(primes) / limit
 
-        result = numpy.empty_like(primes)
-        cuda.memcpy_dtoh(result, primes_gpu)
-        factor = min(result, 1)
+        result = numpy.array([])
+        for t in range(0, numTimes):
+            function(numpy.int32(n), primes_gpu, block=(limit, 1, 1))
+            currentResult = numpy.empty_like(primes)
+            cuda.memcpy_dtoh(currentResult, primes_gpu)
+            result = numpy.concatenate((result, currentResult), axis=0).astype(int)
+
+        factor = min2(result, 1)
         if factor == None:
             break
         factors.append(factor)
@@ -75,7 +81,7 @@ def factorParallel(n):
 
         if not logged:
             logged = True
-            print 'Using', len(primes), 'cores.'
+            print 'Using', len(result), 'cores.'
 
     if n > 1:
         factors.append(n)
