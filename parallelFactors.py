@@ -71,8 +71,7 @@ def factorParallel(n):
             function(numpy.int32(n), primes_gpu, block=(limit, 1, 1))
             currentResult = numpy.empty_like(primes)
             cuda.memcpy_dtoh(currentResult, primes_gpu)
-            result = numpy.concatenate((result, currentResult), axis=0).astype(int)
-            print t * limit, '\t', min(t * limit + limit, len(allPrimes)), '\t', len(allPrimes)
+            result = numpy.concatenate((result, currentResult), axis=0).astype(numpy.int32)
             if min2(result, 1) != None:
                 break
 
@@ -128,5 +127,11 @@ else:
     factor = factorParallel
 
 # test
-print n, 'in', method
-print factor(n)
+result = factor(n)
+print n, 'factored in', method
+print result
+
+total = 1
+for r in result:
+    total *= r
+print 'Total multiplication of factors (for verification):\t', total
