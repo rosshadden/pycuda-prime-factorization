@@ -62,16 +62,11 @@ def factorParallel(n):
 
     values = numpy.zeros(numPrimes, numpy.int32)
     primes = numpy.copy(allPrimes).astype(numpy.int32)
-    values_gpu = cuda.mem_alloc(values.nbytes)
-    primes_gpu = cuda.mem_alloc(primes.nbytes)
-    cuda.memcpy_htod(values_gpu, values)
-    cuda.memcpy_htod(primes_gpu, primes)
 
     result = numpy.zeros(numPrimes, numpy.int32)
 
     while True:
-        factor(numpy.int64(n), values_gpu, primes_gpu, block=(numThreads, 1, 1))
-        cuda.memcpy_dtoh(result, values_gpu)
+        factor(numpy.int64(n), cuda.InOut(values), cuda.In(primes), block=(numThreads, 1, 1))
 
         prime = min2(result, 1)
         if prime == None:
@@ -82,7 +77,6 @@ def factorParallel(n):
         sqrtN = int(n ** 0.5) + 1
         numPrimesUnderN = math.ceil(sqrtN / math.log(sqrtN))
         primes = primes[0:numPrimesUnderN]
-        cuda.memcpy_htod(primes_gpu, primes)
 
     print len(allPrimes)
 
