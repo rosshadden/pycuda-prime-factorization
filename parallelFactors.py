@@ -58,7 +58,7 @@ def factorParallel(n):
 
     logged = False
     while True:
-        limit = min(len(allPrimes), 256)
+        limit = min(len(allPrimes), 384)
         numTimes = math.ceil(len(allPrimes) / (1.0 * limit))
 
         result = numpy.array([], numpy.int32)
