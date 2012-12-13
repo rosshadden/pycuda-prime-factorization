@@ -60,13 +60,11 @@ def factorParallel(n):
     numPrimes = len(allPrimes)
     numThreads = 384
 
-    values = numpy.zeros(numPrimes, numpy.int32)
+    result = numpy.zeros(numPrimes, numpy.int32)
     primes = numpy.copy(allPrimes).astype(numpy.int32)
 
-    result = numpy.zeros(numPrimes, numpy.int32)
-
     while True:
-        factor(numpy.int64(n), cuda.InOut(values), cuda.In(primes), block=(numThreads, 1, 1))
+        factor(numpy.int64(n), cuda.InOut(result), cuda.In(primes), block=(numThreads, 1, 1))
 
         prime = min2(result, 1)
         if prime == None:
@@ -77,8 +75,6 @@ def factorParallel(n):
         sqrtN = int(n ** 0.5) + 1
         numPrimesUnderN = math.ceil(sqrtN / math.log(sqrtN))
         primes = primes[0:numPrimesUnderN]
-
-    print len(allPrimes)
 
     if n > 1:
         factors.append(n)
