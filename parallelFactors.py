@@ -119,12 +119,6 @@ else:
 
 n0 = n
 
-result = factor(n)
+factors = factor(n)
 print n, 'factored in', method
-print result
-
-total = 1
-for r in result:
-    total *= r
-print 'Total multiplication of factors (for verification):\t', total
-print '\tinput == output:\t', n0 == total
+print 'Prime factorization:\t', factors
