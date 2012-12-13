@@ -76,13 +76,11 @@ def factorParallel(n):
         if factor == None:
             break
         factors.append(factor)
-        # print 'factor', n, factor
         n /= factor
 
         if not logged:
             logged = True
             print 'Using', len(result), 'threads in parallel.'
-        # print min2(result, 1), '\t', n, '\t', numpy.int64(n)
 
     if n > 1:
         factors.append(n)
@@ -125,7 +123,8 @@ if method == 'serial':
 else:
     factor = factorParallel
 
-# test
+n0 = n
+
 result = factor(n)
 print n, 'factored in', method
 print result
@@ -134,6 +133,4 @@ total = 1
 for r in result:
     total *= r
 print 'Total multiplication of factors (for verification):\t', total
-
-
-# use stuff around 2147483647.
+print '\tinput == output:\t', n0 == total
