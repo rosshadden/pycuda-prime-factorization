@@ -43,7 +43,7 @@ kernel = SourceModule("""
 def factorParallel(n):
     """Return a list of the prime factors for a natural number."""
 
-    def min2(list, bound):
+    def min2(list, bound=0):
         for item in list:
             if item > bound:
                 return item
@@ -71,7 +71,8 @@ def factorParallel(n):
             function(numpy.int32(n), primes_gpu, block=(limit, 1, 1))
             currentResult = numpy.empty_like(primes)
             cuda.memcpy_dtoh(currentResult, primes_gpu)
-            result = numpy.concatenate((result, currentResult), axis=0).astype(numpy.int32)
+            result = numpy.append(result, currentResult).astype(numpy.int32)
+            print min2(result, 1), '\t', n, '\t', numpy.int32(n)
             if min2(result, 1) != None:
                 break
 
@@ -135,3 +136,6 @@ total = 1
 for r in result:
     total *= r
 print 'Total multiplication of factors (for verification):\t', total
+
+
+# use stuff around 2147483647.
