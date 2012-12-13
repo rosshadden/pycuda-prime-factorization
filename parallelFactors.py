@@ -54,22 +54,23 @@ def factorParallel(n):
     factors = []
 
     allPrimes = quadradticSieve(int(n ** 0.5) + 1)
+    numThreads = 384
     function = kernel.get_function('factor')
 
-    logged = False
+    values = numpy.zeros(len(allPrimes), numpy.int32)
+    primes = numpy.copy(allPrimes).astype(numpy.int32)
+    values_gpu = cuda.mem_alloc(values.nbytes)
+    primes_gpu = cuda.mem_alloc(primes.nbytes)
+
     while True:
         result = numpy.array([], numpy.int32)
         # for t in range(0, int(numTimes)):
-        temp = numpy.zeros(len(allPrimes), numpy.int32)
-        temp_gpu = cuda.mem_alloc(temp.nbytes)
-        cuda.memcpy_htod(temp_gpu, temp)
-        primes = numpy.copy(allPrimes).astype(numpy.int32)
-        primes_gpu = cuda.mem_alloc(primes.nbytes)
+        cuda.memcpy_htod(values_gpu, values)
         cuda.memcpy_htod(primes_gpu, primes)
 
-        function(numpy.int64(n), temp_gpu, primes_gpu, block=(384, 1, 1))
-        currentResult = numpy.empty_like(temp)
-        cuda.memcpy_dtoh(currentResult, temp_gpu)
+        function(numpy.int64(n), values_gpu, primes_gpu, block=(numThreads, 1, 1))
+        currentResult = numpy.empty_like(values)
+        cuda.memcpy_dtoh(currentResult, values_gpu)
         result = numpy.append(result, currentResult)
 
         factor = min2(result, 1)
@@ -77,10 +78,6 @@ def factorParallel(n):
             break
         factors.append(factor)
         n /= factor
-
-        if not logged:
-            logged = True
-            print 'Using', len(result), 'threads in parallel.'
 
     if n > 1:
         factors.append(n)
